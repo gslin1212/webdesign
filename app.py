@@ -1,53 +1,37 @@
-
-import streamlit as st
+from pygwalker.api.streamlit import StreamlitRenderer
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import streamlit as st
 
+
+
+# Adjust the width of the Streamlit page
+st.set_page_config(
+    page_title="Use Pygwalker In Streamlit",
+    layout="wide"
+)
+
+# Function to load data from the uploaded file
 def load_data(uploaded_file):
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
+            return df
         except Exception as e:
             st.error(f"Error: {e}")
             return None
-        return df
     return None
 
-def visualize_data(df, x_axis, y_axis, plot_type):
-    if plot_type == 'Bar':
-        fig = plt.figure(figsize=(10, 6))
-        sns.barplot(data=df, x=x_axis, y=y_axis)
-    elif plot_type == 'Line':
-        fig = plt.figure(figsize=(10, 6))
-        plt.plot(df[x_axis], df[y_axis], marker='o')
-    elif plot_type == 'Scatter':
-        fig = plt.figure(figsize=(10, 6))
-        sns.scatterplot(data=df, x=x_axis, y=y_axis)
-    else:
-        st.error("Unsupported plot type selected.")
-        return None
-    return fig
+# File uploader widget
+uploaded_file = st.file_uploader("Upload your CSV file", type=["csv,xlsx,xml,xls"])
 
-# Streamlit widgets to interact with the user
-st.title("CSV Data Processor")
-uploaded_file = st.file_uploader("Upload your CSV file", type=['csv'])
+# Load the data
+df = load_data(uploaded_file)
 
-if uploaded_file is not None:
-    df = load_data(uploaded_file)
-    if df is not None:
-        # Display dataframe
-        st.write("### Original Data")
-        st.write(df)
-
-        # Select options for visualization
-        st.write("### Data Visualization")
-        plot_type = st.selectbox("Select Plot Type", ['Bar', 'Line', 'Scatter'])
-        available_columns = df.columns.tolist()
-        x_axis = st.selectbox("Select X-axis", available_columns)
-        y_axis = st.selectbox("Select Y-axis", available_columns)
-
-        if st.button("Generate Plot"):
-            fig = visualize_data(df, x_axis, y_axis, plot_type)
-            if fig is not None:
-                st.pyplot(fig)
+# Check if the data is loaded successfully
+if df is not None:
+    # Initialize and use Pygwalker StreamlitRenderer
+    pyg_app = StreamlitRenderer(df)
+    pyg_app.explorer()
+    
+else:
+    st.info("Please upload a CSV file to proceed.")
